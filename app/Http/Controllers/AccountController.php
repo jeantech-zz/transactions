@@ -8,6 +8,7 @@ use App\Models\Type;
 use App\Models\Client;
 use App\Models\Registration;
 use Illuminate\Support\Facades\DB;
+use App\Models\Transaction;
 
 /**
  * Class AccountController
@@ -22,12 +23,9 @@ class AccountController extends Controller
      */
     public function index()
     {
-       // $accounts = Account::paginate();
-
-        $accounts = DB::table('accounts')
+        $accounts =Account::select('accounts.*','types.name As type_name','clients.names As client_name')
         ->join('types', 'types.id', '=', 'accounts.type_id')
         ->join('clients', 'clients.id', '=', 'accounts.client_id')
-        ->select('accounts.*','types.name As type_name','clients.names As client_name')
         ->where('type_info', 'account')
         ->paginate(15);
 
@@ -44,7 +42,8 @@ class AccountController extends Controller
     {
         $account = new Account();
         $clients = Client::pluck('names', 'id');
-        $types = DB::table('types')->where('type_info', 'account')->pluck('name','id');
+        //$types = DB::table('types')->where('type_info', 'account')->pluck('name','id');
+        $types=Type::where('type_info', 'account')->pluck('name','id');
 
 
         /*$types = Type::where('type_info', '=', 'account')
@@ -66,7 +65,6 @@ class AccountController extends Controller
 
         $account = Account::create($request->all());
 
-
         $registration=new Registration();
 
         $registration->client_id=$request->client_id;
@@ -86,15 +84,12 @@ class AccountController extends Controller
      */
     public function show($id)
     {
-       // $account = Account::find($id);
-
-        $account = DB::table('accounts')
+        $account = Account::select('accounts.*','types.name As type_name','clients.names As client_name')
         ->join('types', 'types.id', '=', 'accounts.type_id')
         ->join('clients', 'clients.id', '=', 'accounts.client_id')
-        ->select('accounts.*','types.name As type_name','clients.names As client_name')
         ->where('type_info', 'account')
-        ->where('accounts.id',$id)
-        ->get()[0];
+        ->where('accounts.id',$id)->first();
+        // ->select('accounts.*','types.name As type_name','clients.names As client_name')
 
         return view('account.show', compact('account'));
     }
@@ -109,7 +104,7 @@ class AccountController extends Controller
     {
         $account = Account::find($id);
         $clients = Client::pluck('names', 'id');
-        $types = DB::table('types')->where('type_info', 'account')->pluck('name','id');
+        $types=Type::where('type_info', 'account')->pluck('name','id');
 
         return view('account.edit', compact('account','clients','types'));
     }
@@ -138,9 +133,21 @@ class AccountController extends Controller
      */
     public function destroy($id)
     {
-        $account = Account::find($id)->delete();
+        $transaction = Account::select('accounts.*', 'transactions.*')
+        ->join('transactions', 'transactions.account_id', '=', 'accounts.id')
+        ->where('accounts.id',$id)
+        ->get();
+
+        $transactionCount = $transaction->count();
+
+        if( $transactionCount<1){
+            $mensaje="No se puede eliminar tiene transaciones registradas";
+        }else {
+            $account = Account::find($id)->delete();
+            $mensaje ='Account deleted successfully';
+        }
 
         return redirect()->route('accounts.index')
-            ->with('success', 'Account deleted successfully');
+            ->with('success', $mensaje);
     }
 }

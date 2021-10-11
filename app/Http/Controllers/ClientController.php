@@ -91,7 +91,8 @@ class ClientController extends Controller
         ->select('clients.*', 'users.name As user_name','types.name As type_name')
         ->where('type_info', 'identification')
         ->where('clients.id',$id)
-        ->get()[0];
+        ->limit(1)->get();
+       // ->get()[0];
 
         return view('client.show', compact('client'));
 

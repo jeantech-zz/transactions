@@ -33,13 +33,19 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <!-- Left Side Of Navbar -->
                     @if (Auth::check())
-                    <ul class="navbar-nav mr-auto">
-                        <a class="nav-link" href="{{ route('transactions.index') }}">{{ __('Operaciones Bancarias') }}</a>
-                    </ul>
-                    <ul class="navbar-nav mr-auto">
-                        <a class="nav-link" href="{{ route('transactions.status') }}">{{ __('Estado de la cuenta') }}</a>
-                    </ul>
-                    
+                        @if (Auth::user()->isCashier())
+                            <ul class="navbar-nav mr-auto">
+                                <a class="nav-link" href="{{ route('transactions.index') }}">{{ __('Operaciones Bancarias') }}</a>
+                            </ul>
+                            
+                        @else
+                        <ul class="navbar-nav mr-auto">
+                                <a class="nav-link" href="{{ route('accounts.index') }}">{{ __('Crear Cuenta') }}</a>
+                        </ul>
+                        <ul class="navbar-nav mr-auto">
+                                <a class="nav-link" href="{{ route('transactions.status') }}">{{ __('Estado de la cuenta') }}</a>
+                            </ul>
+                        @endif
                     @endif
 
                     <!-- Right Side Of Navbar -->

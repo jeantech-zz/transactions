@@ -22,12 +22,9 @@ class RegistrationController extends Controller
      */
     public function index()
     {
-       // $registrations = Registration::paginate();
-
-       $registrations = DB::table('registrations')
+       $registrations =Registration::select('registrations.*','types.name As type_name','clients.names As client_name')
        ->join('types', 'types.id', '=', 'registrations.type_id')
        ->join('clients', 'clients.id', '=', 'registrations.client_id')
-       ->select('registrations.*','types.name As type_name','clients.names As client_name')
        ->where('type_info', 'account')
        ->paginate(15);
 
@@ -44,7 +41,7 @@ class RegistrationController extends Controller
     {
         $registration = new Registration();
         $clients = Client::pluck('names', 'id');
-        $types = DB::table('types')->where('type_info', 'account')->pluck('name','id');
+        $types=Type::where('type_info', 'account')->pluck('name','id');
 
         return view('registration.create', compact('registration','types','clients'));
     }
@@ -58,7 +55,6 @@ class RegistrationController extends Controller
     public function store(Request $request)
     {
         request()->validate(Registration::$rules);
-
         $registration = Registration::create($request->all());
 
         return redirect()->route('registrations.index')
@@ -73,14 +69,11 @@ class RegistrationController extends Controller
      */
     public function show($id)
     {
-        //$registration = Registration::find($id);
-        $registration = DB::table('registrations')
-        ->join('types', 'types.id', '=', 'registrations.type_id')
-        ->join('clients', 'clients.id', '=', 'registrations.client_id')
-        ->select('registrations.*','types.name As type_name','clients.names As client_name')
-        ->where('type_info', 'account')
-        ->where('registrations.id',$id)
-        ->get()[0];
+        $registration = Registration::select('registrations.*','types.name As type_name','clients.names As client_name')
+                        ->join('types', 'types.id', '=', 'registrations.type_id')
+                        ->join('clients', 'clients.id', '=', 'registrations.client_id')
+                        ->where('type_info', 'account')
+                        ->where('registrations.id',$id)->first();
  
 
         return view('registration.show', compact('registration'));
@@ -96,7 +89,7 @@ class RegistrationController extends Controller
     {
         $registration = Registration::find($id);
         $clients = Client::pluck('names', 'id');
-        $types = DB::table('types')->where('type_info', 'account')->pluck('name','id');
+        $types=Type::where('type_info', 'account')->pluck('name','id');
 
         return view('registration.edit', compact('registration','clients', 'types'));
     }
@@ -114,8 +107,7 @@ class RegistrationController extends Controller
 
         $registration->update($request->all());
 
-        return redirect()->route('registrations.index')
-            ->with('success', 'Registration updated successfully');
+        return redirect()->route('registrations.index')->with('success', 'Registration updated successfully');
     }
 
     /**
@@ -127,7 +119,6 @@ class RegistrationController extends Controller
     {
         $registration = Registration::find($id)->delete();
 
-        return redirect()->route('registrations.index')
-            ->with('success', 'Registration deleted successfully');
+        return redirect()->route('registrations.index')->with('success', 'Registration deleted successfully');
     }
 }

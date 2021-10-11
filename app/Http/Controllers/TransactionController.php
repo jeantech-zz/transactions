@@ -24,15 +24,13 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        $transactions = DB::table('transactions')
-        ->join('types', 'types.id', '=', 'transactions.type_id')
-        ->join('clients', 'clients.id', '=', 'transactions.client_id')
-        ->join('accounts', 'accounts.id', '=', 'transactions.account_id')
-        ->join('registrations', 'registrations.id', '=', 'transactions.accounts_registry_id')
-        ->select('transactions.*','types.name As type_name','clients.names As client_name','registrations.number_accounts  As number_account_registration','accounts.number_accounts As number_account')
-        ->where('type_info', 'transaction')
-        ->paginate(15);
-
+        $transactions =Transaction::select('transactions.*','types.name As type_name','clients.names As client_name','registrations.number_accounts  As number_account_registration','accounts.number_accounts As number_account')
+                ->join('types', 'types.id', '=', 'transactions.type_id')
+                ->join('clients', 'clients.id', '=', 'transactions.client_id')
+                ->join('accounts', 'accounts.id', '=', 'transactions.account_id')
+                ->join('registrations', 'registrations.id', '=', 'transactions.accounts_registry_id')
+                ->where('type_info', 'transaction')
+                ->paginate(15);
 
         return view('transaction.index', compact('transactions'))
             ->with('i', (request()->input('page', 1) - 1) * $transactions->perPage());
@@ -48,16 +46,14 @@ class TransactionController extends Controller
     {
         $account_id=$request->account_id;
 
-        $transactions = DB::table('transactions')
+        $transactions =Transaction::select('transactions.*','types.name As type_name','clients.names As client_name','registrations.number_accounts  As number_account_registration','accounts.number_accounts As number_account')
         ->join('types', 'types.id', '=', 'transactions.type_id')
         ->join('clients', 'clients.id', '=', 'transactions.client_id')
         ->join('accounts', 'accounts.id', '=', 'transactions.account_id')
         ->join('registrations', 'registrations.id', '=', 'transactions.accounts_registry_id')
-        ->select('transactions.*','types.name As type_name','clients.names As client_name','registrations.number_accounts  As number_account_registration','accounts.number_accounts As number_account')
         ->where('type_info', 'transaction')
         ->where('transactions.account_id', $account_id)
         ->paginate(15);
-
 
         return view('transaction.showstatus', compact('transactions'))
             ->with('i', (request()->input('page', 1) - 1) * $transactions->perPage());
@@ -72,13 +68,15 @@ class TransactionController extends Controller
     {
         $transaction = new Transaction();
         
-        
         $userId=auth()->id();
-        $clients = Client::select('clients.names','clients.id')->where('user_id', $userId)->get()[0];
+      //  $clients = Client::select('names','id')->where('user_id', $userId)->first();
+        $clients = Client::select('names','id')->first();
         $clients_name=$clients->names;
         $clients_id=$clients->id;
 
-        $accounts = DB::table('accounts')->where('client_id', $clients_id)->pluck('number_accounts','id');
+      //  $accounts = DB::table('accounts')->where('client_id', $clients_id)->pluck('number_accounts','id');
+        $accounts = DB::table('accounts')->pluck('number_accounts','id');
+       // $accounts =Accounts::where('client_id', )->pluck('number_accounts','id');
        
         return view('transaction.status', compact('transaction','clients','accounts','clients_name','clients_id'));
     }
@@ -92,14 +90,15 @@ class TransactionController extends Controller
     {
         $transaction = new Transaction();
         
-        $types = DB::table('types')->where('type_info', 'transaction')->pluck('name','id');
+        $types=Type::where('type_info', 'account')->pluck('name','id');
         $userId=auth()->id();
-        $clients = Client::select('clients.names','clients.id')->where('user_id', $userId)->get()[0];
+    
+        $clients = Client::select('names','id')->where('user_id', $userId)->first();
         $clients_name=$clients->names;
         $clients_id=$clients->id;
 
-        $accounts = DB::table('accounts')->where('client_id', $clients_id)->pluck('number_accounts','id');
-        $registrations = DB::table('registrations')->where('client_id', $clients_id)->pluck('number_accounts','id');
+        $accounts =Account::where('client_id', $clients_id)->pluck('number_accounts','id');
+        $registrations = Registration::where('client_id', $clients_id)->pluck('number_accounts','id');
        
 
         return view('transaction.create', compact('transaction','clients','registrations','types','accounts','userId','clients_name','clients_id'));
@@ -117,13 +116,13 @@ class TransactionController extends Controller
         
         $types = DB::table('types')->where('type_info', 'transaction')->pluck('name','id');
         $userId=auth()->id();
-        $clients = Client::select('clients.names','clients.id')->where('user_id', $userId)->get()[0];
+        $clients = Client::select('names','id')->where('user_id', $userId)->first();
         $clients_name=$clients->names;
         $clients_id=$clients->id;
 
-        $accounts = DB::table('accounts')->where('client_id', $clients_id)->pluck('number_accounts','id');
-        $registrations = DB::table('registrations')
-        ->join('accounts', 'accounts.number_accounts', '!=', 'registrations.number_accounts')
+       $accounts =Account::where('client_id', $clients_id)->pluck('number_accounts','id');
+
+       $registrations =Registration::join('accounts', 'accounts.number_accounts', '!=', 'registrations.number_accounts')
         ->where('registrations.client_id', $clients_id)
         ->where('accounts.client_id', $clients_id)
         ->pluck('registrations.number_accounts','registrations.id');
@@ -156,18 +155,21 @@ class TransactionController extends Controller
      */
     public function show($id)
     {
-        //$transaction = Transaction::find($id);
-
-        $transaction = DB::table('transactions')
+        $transaction = Transaction::select('transactions.*','types.name As type_name','clients.names As client_name','registrations.number_accounts  As number_account_registration','accounts.number_accounts As number_account')
         ->join('types', 'types.id', '=', 'transactions.type_id')
         ->join('clients', 'clients.id', '=', 'transactions.client_id')
         ->join('accounts', 'accounts.id', '=', 'transactions.account_id')
         ->join('registrations', 'registrations.id', '=', 'transactions.accounts_registry_id')
-        ->select('transactions.*','types.name As type_name','clients.names As client_name','registrations.number_accounts  As number_account_registration','accounts.number_accounts As number_account')
         ->where('type_info', 'transaction')
-        ->where('transactions.id',$id)
-        ->get()[0];
+        ->where('transactions.id',$id)->first();
 
+        $userId=auth()->id();
+        $clients = Transaction::select('transactions.*','types.name As type_name','clients.names As client_name','registrations.number_accounts  As number_account_registration','accounts.number_accounts As number_account')
+        ->join('types', 'types.id', '=', 'transactions.type_id')
+        ->join('clients', 'clients.id', '=', 'transactions.client_id')
+        ->join('accounts', 'accounts.id', '=', 'transactions.account_id')
+        ->join('registrations', 'registrations.id', '=', 'transactions.accounts_registry_id')
+        ->where('user_id', $userId)->first();
 
         return view('transaction.show', compact('transaction'));
     }
@@ -181,9 +183,9 @@ class TransactionController extends Controller
     public function edit($id)
     {
         $transaction = Transaction::find($id);
-        $types = DB::table('types')->where('type_info', 'transaction')->pluck('name','id');
+        $types=Type::where('type_info', 'account')->pluck('name','id');
         $userId=auth()->id();
-        $clients = Client::select('clients.names','clients.id')->where('user_id', $userId)->get()[0];
+        $clients = Client::select('names','id')->where('user_id', $userId)->first();
         $clients_name=$clients->names;
         $clients_id=$clients->id;
 

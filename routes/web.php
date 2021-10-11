@@ -19,7 +19,7 @@ Route::get('/', function () {
 });
 
 Auth::routes();
-
+/*
 Route::resource('types', App\Http\Controllers\TypeController::class)->middleware('auth');
 Route::resource('clients', App\Http\Controllers\ClientController::class)->middleware('auth');
 Route::resource('accounts', App\Http\Controllers\AccountController::class)->middleware('auth');
@@ -31,7 +31,7 @@ Route::get('transactions/status',[TransactionController::class,'status'])->name(
 
 Route::resource('transactions', App\Http\Controllers\TransactionController::class)->middleware('auth');
 Route::post('transactions/showstatus',[TransactionController::class,'showstatus'])->name('transactions.showstatus')->middleware('auth');
-
+*/
 /*Route::get('transactions/create',[TransactionController::class,'create'])->name('transactions.create')->middleware('auth');
 Route::get('transactions',[TransactionController::class,'index'])->name('transactions.index')->middleware('auth');
 Route::post('transactions',[TransactionController::class,'store'])->name('transactions.store')->middleware('auth');
@@ -41,7 +41,32 @@ Route::get('transactions/{transaction}/edit',[TransactionController::class,'edit
 //Route::put('transactions/{transaction}/update',[TransactionController::class,'update'])->name('transactions.update');
 //Route::delete('transactions/{transaction}',[TransactionController::class,'destroy'])->name('transactions.destroy');
 
+Route::middleware('auth')->group( callback: function () {
 
+    Route::resource('types', App\Http\Controllers\TypeController::class);
+    Route::resource('clients', App\Http\Controllers\ClientController::class);
+    Route::resource('accounts', App\Http\Controllers\AccountController::class);
+
+    Route::resource('registrations', App\Http\Controllers\RegistrationController::class);
+
+    Route::get('transactions/createthird',[TransactionController::class,'createthird'])->name('transactions.createthird');
+    Route::get('transactions/status',[TransactionController::class,'status'])->name('transactions.status');
+
+    Route::resource('transactions', App\Http\Controllers\TransactionController::class);
+    Route::post('transactions/showstatus',[TransactionController::class,'showstatus'])->name('transactions.showstatus');
+ 
+ });
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
-
+/*
+Route::get('/home', function () {
+    $user=Auth::user();
+    if(Auth::user()->isCashier()){
+    //if(true){ 
+        echo "Es cajero";
+    }else{
+        echo "Es cliente";
+    }
+    return view('welcome');
+});
+*/
